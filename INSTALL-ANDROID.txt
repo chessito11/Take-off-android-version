@@ -1,0 +1,18 @@
+ATLAS ESTIMATING — ANDROID COMPLETE FOLDER
+
+This folder is Android-only.
+
+TO INSTALL:
+
+1. Publish this complete folder over HTTPS.
+2. On Android, open Chrome.
+3. Go to:
+   https://YOUR-SITE/android.html
+4. Tap INSTALL APP.
+   If no prompt appears:
+   Chrome ⋮ → Install app / Add to Home screen.
+5. Open ATLAS once while online.
+
+OPEN SAVED appears beside OPEN.
+
+Do not mix the iPad files into this folder.

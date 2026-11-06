@@ -1054,27 +1054,31 @@
 
   function updateTraceUI() {
     const traceActive = state.toolMode === "trace";
-    $("traceWallsBtn").classList.toggle("active-tool", traceActive);
+    const traceBtn = $("traceWallsBtn");
+    traceBtn.classList.toggle("active-tool", traceActive);
+    traceBtn.setAttribute("aria-pressed", traceActive ? "true" : "false");
+    traceBtn.textContent = traceActive ? "STOP ■" : "TRACE ▶";
+
     $("traceLockBtn").classList.toggle("active-tool", !!state.trace.locked);
     $("traceLockBtn").classList.toggle("trace-paused", traceActive && !state.trace.locked);
     $("traceLockBtn").setAttribute("aria-pressed", state.trace.locked ? "true" : "false");
     $("traceLockBtn").textContent = state.trace.locked ? "LOCK ✓" : "LOCK";
+
     $("orthoLockBtn").classList.toggle("active-tool", !!state.trace.ortho);
     $("orthoLockBtn").setAttribute("aria-pressed", state.trace.ortho ? "true" : "false");
     $("orthoLockBtn").textContent = state.trace.ortho ? "ORTHO ✓" : "ORTHO";
+
     syncFullscreenTools();
-    if (!traceActive) return;
 
     const typeText = state.activeWallType ? ` • ${state.activeWallType}` : " • Unassigned";
-    const runText = state.trace.locked ? " • RECORDING" : " • PAUSED";
     const orthoText = state.trace.ortho ? " • ORTHO" : "";
 
-    if (!state.trace.locked) {
-      $("hintbar").textContent = `TRACE PAUSED${typeText}${orthoText} • LOCK ON starts a new chain`;
-    } else if (!state.trace.lastPoint) {
-      $("hintbar").textContent = `TRACE: Tap first corner${typeText}${runText}${orthoText}`;
+    if (!traceActive) return;
+
+    if (!state.trace.lastPoint) {
+      $("hintbar").textContent = `RECORDING: Tap first corner${typeText}${orthoText} • STOP ends this section`;
     } else {
-      $("hintbar").textContent = `TRACE: Tap next corner${typeText}${runText}${orthoText}`;
+      $("hintbar").textContent = `RECORDING: Tap next corner${typeText}${orthoText} • STOP ends this section`;
     }
   }
 
@@ -1119,23 +1123,36 @@
   function activateTraceMode() {
     state.placingDoor = false;
     updateDoorModeUI();
+
     if (!state.segments.length) {
       alert("Open a DXF drawing first.");
       return;
     }
 
-    const enteringTrace = state.toolMode !== "trace";
+    // PlanSwift-style TRACE toggle:
+    // TRACE ON  = record the current wall chain.
+    // TRACE OFF = finish this chain and return to normal wall selection.
+    // The active wall type and ORTHO setting remain unchanged.
+    if (state.toolMode === "trace") {
+      const typeText = state.activeWallType ? ` • ${state.activeWallType}` : " • Unassigned";
+      const orthoText = state.trace.ortho ? " • ORTHO" : "";
+
+      activateWallMode(false);
+      updateTraceUI();
+      $("hintbar").textContent = `TRACE STOPPED${typeText}${orthoText} • TRACE ▶ starts a new disconnected section`;
+      draw();
+      return;
+    }
+
     state.toolMode = "trace";
     state.trace.locked = true;
+    state.trace.lastPoint = null;
     state.calibration.activePoint = null;
-
-    // Entering TRACE starts a new chain. Pressing TRACE while already in
-    // trace mode simply resumes recording without destroying the last point.
-    if (enteringTrace) state.trace.lastPoint = null;
 
     hideCalibrationPanel();
     closeMoreMenu();
-    if (enteringTrace) selectSegment(null, { preserveMode: true });
+    selectSegment(null, { preserveMode: true });
+
     updateToolUI();
     updateCalibrationUI();
     updateTraceUI();
@@ -2364,7 +2381,10 @@
     $("fullscreenBtn").textContent = active ? "⛶ EXIT FULL SCREEN" : "⛶ FULL SCREEN";
     $("fullscreenBtn").setAttribute("aria-pressed", active ? "true" : "false");
     $("fsWallBtn").classList.toggle("active-tool", state.toolMode === "wall");
-    $("fsTraceBtn").classList.toggle("active-tool", state.toolMode === "trace");
+    const fsTraceActive = state.toolMode === "trace";
+    $("fsTraceBtn").classList.toggle("active-tool", fsTraceActive);
+    $("fsTraceBtn").setAttribute("aria-pressed", fsTraceActive ? "true" : "false");
+    $("fsTraceBtn").textContent = fsTraceActive ? "STOP ■" : "TRACE ▶";
     $("fsLockBtn").classList.toggle("trace-on", state.trace.locked);
     $("fsLockBtn").classList.toggle("trace-paused", state.toolMode === "trace" && !state.trace.locked);
     $("fsLockBtn").textContent = state.trace.locked ? "TRACE LOCK ✓" : "TRACE LOCK";

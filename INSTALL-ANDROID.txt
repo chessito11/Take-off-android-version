@@ -16,3 +16,15 @@ TO INSTALL:
 OPEN SAVED appears beside OPEN.
 
 Do not mix the iPad files into this folder.
+
+
+V1.2 UPDATE:
+Upload this COMPLETE folder as your Android site.
+
+Expected toolbar:
+OPEN | OPEN SAVED | TRACE ▶ | ORTHO | TAKEOFF
+
+When TRACE is active:
+TRACE ▶ becomes STOP ■
+
+STOP ends the current wall chain. TRACE starts a new disconnected chain using the same active wall type.

@@ -29,3 +29,18 @@ It contains the full estimator plus the Android launcher. The iPad files are int
 OPEN SAVED appears beside OPEN and uses ATLAS's existing IndexedDB saved-project system.
 
 Saved projects are local to that Android device/browser. Use ATLAS project backups when moving jobs between devices.
+
+
+## v1.2 — TRACE record / stop
+
+This version moves the behavior into the actual ATLAS source, not the Android wrapper.
+
+- WALL is no longer visible.
+- LOCK is no longer visible.
+- TRACE ▶ starts recording.
+- While tracing, TRACE changes to STOP ■.
+- STOP ■ finishes that chain and returns to normal wall selection.
+- TRACE ▶ again starts a brand-new disconnected section.
+- The active wall type stays selected.
+- ORTHO stays selected/unselected exactly as it was.
+- Normal wall selection works whenever TRACE is stopped.

@@ -56,11 +56,117 @@ function installOpenSaved(){
   }
  }catch(e){console.warn("OPEN SAVED shortcut unavailable",e)}
 }
+
+function installTraceToggleWorkflow(){
+ try{
+  const doc=frame.contentDocument;
+  if(!doc)return;
+
+  const wall=doc.getElementById("wallModeBtn");
+  const trace=doc.getElementById("traceWallsBtn");
+  const lock=doc.getElementById("traceLockBtn");
+  const fsWall=doc.getElementById("fsWallBtn");
+  const fsTrace=doc.getElementById("fsTraceBtn");
+  const fsLock=doc.getElementById("fsLockBtn");
+
+  if(!trace || !wall)return;
+
+  // Android field workflow:
+  // TRACE OFF = normal wall selection.
+  // TRACE ON  = record walls.
+  // Turning TRACE off clears the current chain through ATLAS's existing
+  // activateWallMode logic, but preserves the active wall type.
+  if(wall) wall.style.display="none";
+  if(fsWall) fsWall.style.display="none";
+
+  // TRACE now owns record / stop-record, so the old LOCK control is redundant.
+  if(lock) lock.style.display="none";
+  if(fsLock) fsLock.style.display="none";
+
+  function traceIsOn(){
+    return trace.classList.contains("active-tool");
+  }
+
+  function syncTraceLabel(){
+    const on=traceIsOn();
+    trace.textContent=on ? "STOP ■" : "TRACE ▶";
+    trace.setAttribute("aria-pressed",on ? "true" : "false");
+    trace.title=on
+      ? "Stop tracing and finish this wall chain"
+      : "Start tracing a new wall chain with the current wall type";
+
+    if(fsTrace){
+      fsTrace.textContent=on ? "STOP TRACE ■" : "TRACE WALLS ▶";
+      fsTrace.setAttribute("aria-pressed",on ? "true" : "false");
+      fsTrace.title=trace.title;
+    }
+  }
+
+  if(!trace.dataset.androidTraceToggle){
+    trace.dataset.androidTraceToggle="1";
+
+    // Capture phase lets us stop ATLAS's original TRACE handler only when
+    // TRACE is already active. When inactive, the original handler runs normally.
+    trace.addEventListener("click",(event)=>{
+      if(!traceIsOn()){
+        setTimeout(syncTraceLabel,0);
+        return;
+      }
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+
+      // Reuse ATLAS's existing WALL-mode action invisibly.
+      // This stops recording, clears the last trace point, and keeps activeWallType.
+      wall.click();
+      setTimeout(syncTraceLabel,0);
+    },true);
+
+    new MutationObserver(syncTraceLabel).observe(trace,{
+      attributes:true,
+      attributeFilter:["class"]
+    });
+  }
+
+  if(fsTrace && !fsTrace.dataset.androidTraceToggle){
+    fsTrace.dataset.androidTraceToggle="1";
+    fsTrace.addEventListener("click",(event)=>{
+      if(!traceIsOn()){
+        // Trigger the normal top TRACE control, which runs ATLAS's existing
+        // trace-start logic and starts a fresh chain.
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        trace.click();
+        setTimeout(syncTraceLabel,0);
+        return;
+      }
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      wall.click();
+      setTimeout(syncTraceLabel,0);
+    },true);
+
+    new MutationObserver(syncTraceLabel).observe(fsTrace,{
+      attributes:true,
+      attributeFilter:["class"]
+    });
+  }
+
+  syncTraceLabel();
+ }catch(e){
+  console.warn("ATLAS Android TRACE toggle unavailable",e);
+ }
+}
 setVH();
 window.addEventListener("resize",setVH,{passive:true});
 window.addEventListener("orientationchange",()=>setTimeout(setVH,80),{passive:true});
 window.visualViewport?.addEventListener("resize",setVH,{passive:true});
-frame.addEventListener("load",()=>{installOpenSaved();setTimeout(installOpenSaved,100);setTimeout(installOpenSaved,500)});
+frame.addEventListener("load",()=>{
+ installOpenSaved();installTraceToggleWorkflow();
+ setTimeout(()=>{installOpenSaved();installTraceToggleWorkflow()},100);
+ setTimeout(()=>{installOpenSaved();installTraceToggleWorkflow()},500);
+});
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;if(!standalone())installBtn.hidden=false});
 window.addEventListener("appinstalled",()=>{deferredPrompt=null;installBtn.hidden=true;help.hidden=true});
 installBtn.addEventListener("click",async()=>{
@@ -70,7 +176,7 @@ installBtn.addEventListener("click",async()=>{
 closeHelp.addEventListener("click",()=>help.hidden=true);
 help.addEventListener("click",e=>{if(e.target===help)help.hidden=true});
 if(standalone())installBtn.hidden=true;
-window.addEventListener("pageshow",()=>{setVH();try{frame.contentWindow?.dispatchEvent(new Event("resize"));installOpenSaved()}catch(_){}});
+window.addEventListener("pageshow",()=>{setVH();try{frame.contentWindow?.dispatchEvent(new Event("resize"));installOpenSaved();installTraceToggleWorkflow()}catch(_){}});
 if("serviceWorker"in navigator&&location.protocol==="https:"){
  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw-android.js",{scope:"./"}).catch(e=>console.warn("Offline cache unavailable",e)));
 }

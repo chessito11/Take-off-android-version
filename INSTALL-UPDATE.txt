@@ -1,0 +1,20 @@
+ATLAS ANDROID v1.1 — SIMPLE UPDATE
+
+Replace only these two files in your published Android GitHub repository:
+
+1. android.html
+2. sw-android.js
+
+Then:
+- Open android.html once in Chrome while online.
+- Close the installed ATLAS app completely.
+- Open it again.
+
+NEW WORKFLOW:
+TRACE ▶ = start recording
+STOP ■ = stop / finish that chain
+TRACE ▶ again = start a new disconnected chain with the SAME active wall type
+
+WALL and LOCK are hidden.
+ORTHO still works.
+Normal wall selection works whenever TRACE is off.
